@@ -64,7 +64,7 @@ body.proj .choix{font-size:1.5em}
 </head>
 <body>
 <header>
-  <h1>Quiz <small>v1</small></h1>
+  <h1>Quiz <small>v1.1</small></h1>
   <label>Prénom <input id="pseudo" size="12"></label>
   <label><input type="checkbox" id="isAnim"> Animateur</label>
   <button type="button" id="projBtn" class="sec">Projection</button>
@@ -101,7 +101,7 @@ body.proj .choix{font-size:1.5em}
 
 <script>
 const PAL = ['#0a7c72', '#1f5fa8', '#b4492d', '#6b4e9b', '#8a6d00', '#2e7d32'];
-let recs = [], map = {}, qs = [], actif = '', etat = 'ferme', fin = 0, top = false, sur = '', envoye = '', expire = false;
+let recs = [], map = {}, qs = [], actif = '', etat = 'ferme', fin = 0, affTop = false, sur = '', envoye = '', expire = false;
 let me = localStorage.getItem('qz_me') || '', anim = localStorage.getItem('qz_anim') === '1';
 const $ = s => document.querySelector(s);
 const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
@@ -125,7 +125,7 @@ grist.onRecords((rows, m) => { map = m || {}; recs = grist.mapColumnNames(rows) 
 grist.onOptions(o => {
   o = o || {};
   qs = Array.isArray(o.questions) ? o.questions : [];
-  actif = o.actif || ''; etat = o.etat || 'ferme'; fin = Number(o.fin) || 0; top = !!o.top;
+  actif = o.actif || ''; etat = o.etat || 'ferme'; fin = Number(o.fin) || 0; affTop = !!o.top;
   render();
 });
 
@@ -183,7 +183,7 @@ function render() {
   }
   const cl = classement(), moi = cl.find(g => g.nom === me);
   if (moi) z.append(el('p', 'bilan', 'Ton score : ' + moi.pts + ' pts \u2013 rang ' + moi.rang + ' sur ' + cl.length));
-  if (top && cl.length) {
+  if (affTop && cl.length) {
     z.append(el('h2', null, 'Classement'));
     cl.slice(0, 10).forEach(g => {
       const r = el('div', 'rang' + (g.nom === me ? ' moi' : ''));
@@ -207,7 +207,7 @@ const retirer = ids => { if (ids.length) act(tb => [['BulkRemoveRecord', tb, ids
 
 function panneau() {
   if (!anim) return;
-  $('#top').textContent = top ? 'Masquer le classement' : 'Afficher le classement';
+  $('#top').textContent = affTop ? 'Masquer le classement' : 'Afficher le classement';
   sure($('#vq'), 'vq', 'Vider les réponses de la question', () => retirer(idsDe(r => r.Question === actif)));
   sure($('#vt'), 'vt', 'Nouvelle partie (tout vider)', () => { retirer(recs.map(r => r.id)); opt('actif', ''); opt('etat', 'ferme'); opt('top', false); });
   const l = $('#liste'); l.textContent = '';
@@ -229,7 +229,7 @@ $('#prec').onclick = () => aller(-1);
 $('#suiv').onclick = () => aller(1);
 $('#fer').onclick = () => { opt('etat', 'ferme'); };
 $('#cor').onclick = () => { opt('etat', 'corrige'); };
-$('#top').onclick = () => opt('top', !top);
+$('#top').onclick = () => opt('top', !affTop);
 
 $('#nqf').addEventListener('submit', e => {
   e.preventDefault();
