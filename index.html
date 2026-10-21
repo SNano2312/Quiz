@@ -49,6 +49,9 @@ body.admin #panneau{display:flex}
 #panneau .ligne{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 #nqf{display:flex;flex-direction:column;gap:6px}
 #nqc{height:80px}
+#nqe{height:56px}
+.explic{background:#fff;border-left:6px solid #2e7d32;border-radius:6px;padding:10px 14px;margin:8px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+body.proj .explic{font-size:1.3em}
 .qrow{display:flex;gap:8px;align-items:center;padding:3px 6px;border:1px solid var(--trait);border-radius:4px}
 .qrow.actif{border-color:var(--accent);background:#e3f1ee}
 .qt{flex:1;overflow-wrap:anywhere}
@@ -64,7 +67,7 @@ body.proj .choix{font-size:1.5em}
 </head>
 <body>
 <header>
-  <h1>Quiz <small>v1.1</small></h1>
+  <h1>Quiz <small>v1.2</small></h1>
   <label>Prénom <input id="pseudo" size="12"></label>
   <label><input type="checkbox" id="isAnim"> Animateur</label>
   <button type="button" id="projBtn" class="sec">Projection</button>
@@ -76,6 +79,7 @@ body.proj .choix{font-size:1.5em}
   <form id="nqf">
     <input id="nqt" maxlength="200" placeholder="Nouvelle question" aria-label="Nouvelle question">
     <textarea id="nqc" placeholder="Les choix, un par ligne (2 à 6)" aria-label="Choix"></textarea>
+    <textarea id="nqe" maxlength="500" placeholder="Explication de la bonne réponse, affichée à la correction (facultatif)" aria-label="Explication"></textarea>
     <div class="ligne">
       <label>Bonne réponse (lettre) <input id="nqb" size="2" maxlength="1" placeholder="A"></label>
       <label>Durée (secondes, 0 = illimité) <input id="nqd" type="number" min="0" max="300" value="20" style="width:70px"></label>
@@ -179,6 +183,7 @@ function render() {
     });
     if (etat === 'corrige') z.append(el('p', 'bilan', !mien ? 'Tu n\u2019as pas répondu.' : Number(mien.Points) > 0 ? '+' + mien.Points + ' points' : 'Raté, 0 point.'));
     else if (mien) z.append(el('p', 'aide', 'Réponse enregistrée. La correction arrive.'));
+    if (etat === 'corrige' && q.explication) { const ex = el('div', 'explic'); ex.append(el('b', null, 'Explication : '), q.explication); z.append(ex); }
     if (anim) z.append(el('p', 'aide', st.total + ' réponse' + (st.total > 1 ? 's' : '') + ' reçue' + (st.total > 1 ? 's' : '')));
   }
   const cl = classement(), moi = cl.find(g => g.nom === me);
@@ -219,7 +224,7 @@ function panneau() {
       opt('questions', qs.filter(x => x.id !== q.id)); if (actif === q.id) opt('actif', '');
       retirer(idsDe(r => r.Question === q.id));
     });
-    row.append(el('span', 'qt', (i + 1) + '. ' + q.texte + ' \u2013 bonne réponse ' + String.fromCharCode(65 + q.bonne) + (q.duree ? ', ' + q.duree + ' s' : '')), go, del);
+    row.append(el('span', 'qt', (i + 1) + '. ' + q.texte + ' \u2013 bonne réponse ' + String.fromCharCode(65 + q.bonne) + ' (' + q.choix[q.bonne] + ')' + (q.explication ? ', avec explication' : '') + (q.duree ? ', ' + q.duree + ' s' : '')), go, del);
     l.append(row);
   });
 }
@@ -239,8 +244,8 @@ $('#nqf').addEventListener('submit', e => {
   const duree = Math.max(0, Math.min(300, Number($('#nqd').value) || 0));
   if (!t || ch.length < 2) return say('Saisis une question et au moins deux choix (un par ligne).');
   if (bonne < 0 || bonne >= ch.length) return say('Indique la lettre de la bonne réponse (A à ' + String.fromCharCode(64 + ch.length) + ').');
-  opt('questions', [...qs, { id: 'q' + Date.now().toString(36), texte: t, choix: ch, bonne, duree }]);
-  $('#nqt').value = ''; $('#nqc').value = ''; $('#nqb').value = '';
+  opt('questions', [...qs, { id: 'q' + Date.now().toString(36), texte: t, choix: ch, bonne, duree, explication: $('#nqe').value.trim().slice(0, 500) }]);
+  $('#nqt').value = ''; $('#nqc').value = ''; $('#nqb').value = ''; $('#nqe').value = '';
 });
 
 $('#exp').onclick = () => {
